@@ -71,41 +71,16 @@ guidata(hObject, handles);
 % UIWAIT makes untitled wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
-global pid_sag_kp;
-global pid_sol_kp;
-global pid_sag_ki;
-global pid_sol_ki;
-global pid_sag_kd;
-global pid_sol_kd;
-global x_pid_topic_input;
-global x_server_input;
-global x_port_input;
-global x_output_text;
-global x_pub_topic;
-global x_pub_type;
-global x_pub_data;
-global x_sub_topic;
-global x_sub_type;
-global x_sub_data;
-global x_enable_pub;
-global x_enable_sub;
-global x_enable_pid;
-global xx_pub_linx;
-global xx_pub_liny;
-global xx_pub_linz;
-global xx_pub_anx;
-global xx_pub_any;
-global xX_pub_anz;
-global konumx_cizim_dizisi;
-global konumy_cizim_dizisi;
-global konum_veri_sayisi;
+global posx_plot_arr;
+global posy_plot_arr;
+global pos_data_count;
 global x_sub_counter;
 
-konum_veri_sayisi = 0;
+pos_data_count = 0;
 
-% Dizileri clear edelim
-konumx_cizim_dizisi = [];
-konumy_cizim_dizisi = [];
+% Clear array elements
+posx_plot_arr = [];
+posy_plot_arr = [];
 x_sub_counter = [];
 
 
@@ -178,15 +153,14 @@ global xx_pub_linz;
 global xx_pub_anx;
 global xx_pub_any;
 global xx_pub_anz;
-global x_sub_counter; % Kac saniye calissin, subscribe + plot
+global x_sub_counter; % Counter for the subscriber to work
 
-
-global knm_zaman; %Gecici global degisken
-global konum_cikti; %Datayi subscribe ettikten sonraki 3 elemanli array
-                    % 1-Zaman, 2-Konum(x), 3-Konum(y)
-global konumx_cizim_dizisi; %Axes'da plot yapilacak iken kullanilacak diziler
-global konumy_cizim_dizisi;
-global konum_veri_sayisi;
+global knm_zaman; % Test variable
+global konum_cikti; % Data subscribed
+                    % 1-Timestamp, 2-Pos(x), 3-Pos(y)
+global posx_plot_arr; % Arrays for plotting
+global posy_plot_arr;
+global pos_data_count;
                   
 
 
@@ -203,20 +177,20 @@ display(x_enable_pid);
 
 
 if (x_enable_pub == 1)
-    [ws_y lh_y] = baglanti_kontrol(x_server_input, x_port_input);
-    %Baglanti mesajlari
-    baglanti_invalid_msg = 'Connection Failed';
-    baglanti_valid_msg = 'Connection Accomplished';
+    [ws_y lh_y] = MRI_connection_control(x_server_input, x_port_input);
+    % Connection messages
+    connection_invalid_msg = 'Connection Failed';
+    connection_valid_msg = 'Connection Accomplished';
 
-    %Mesaj goster
+    % Display message
     if (isempty(ws_y))
-        % Output text'i ayarlayalim
+        % Display in the output area
         display(x_output_text);
-        set(handles.output_text, 'String', strcat(baglanti_invalid_msg, '\n', x_output_text));
+        set(handles.output_text, 'String', strcat(connection_invalid_msg, '\n', x_output_text));
     else
-        % Baglanti saglandi, Output Text'i ayarlayalim
+        % Connection accomplished, display in the output area
         display(x_output_text);
-        set(handles.output_text, 'String', strcat(baglanti_valid_msg, '\n', x_output_text));
+        set(handles.output_text, 'String', strcat(connection_valid_msg, '\n', x_output_text));
        
         %>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         %>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -250,14 +224,14 @@ if (x_enable_pub == 1)
         
         
         if(~(isempty(x_server_input) && isempty(x_port_input) && isempty(x_pub_topic) && isempty(x_pub_type) && isempty(xx_pub_linx) && isempty(xx_pub_liny) && isempty(xx_pub_linz) && isempty(xx_pub_anx) && isempty(xx_pub_any) && isempty(xx_pub_anz) && isempty(x_enable_pub)))
-            output_bilgisi = hiz_publisher(x_server_input, x_port_input, x_pub_topic, xx_pub_linx, xx_pub_liny, xx_pub_linz, xx_pub_anx, xx_pub_any, xx_pub_anz )
-            set(handles.output_text, 'String', strcat(output_bilgisi,  x_output_text));
+            out_data = MRI_vel_publisher(x_server_input, x_port_input, x_pub_topic, xx_pub_linx, xx_pub_liny, xx_pub_linz, xx_pub_anx, xx_pub_any, xx_pub_anz )
+            set(handles.output_text, 'String', strcat(out_data,  x_output_text));
         end
         
-        % Output string'de PID parametresi denetimini yazalim.
+        % PID parameter check
         if (~isempty(x_enable_pub))
             if(isempty(x_server_input) && isempty(x_port_input) && isempty(x_pub_topic))
-                % Parametreleri Lutfen Dogru Giriniz
+                % Please enter the right parameters
                 parametre_invalid_msg = 'Please enter the right parameters';
                 set(handles.output_text, 'String', parametre_invalid_msg);
             end
@@ -267,25 +241,25 @@ if (x_enable_pub == 1)
 end
 
 if(x_enable_sub == 1)
-    [ws_y lh_y] = baglanti_kontrol(x_server_input, x_port_input);
-    %Baglanti mesajlari
-    baglanti_invalid_msg = 'Baglanti Basarisiz.';
-    baglanti_valid_msg = 'Connection Accomplished';
+    [ws_y lh_y] = MRI_connection_control(x_server_input, x_port_input);
+    % Connection messages
+    connection_invalid_msg = 'Connection failed';
+    connection_valid_msg = 'Connection Accomplished';
 
-    %Mesaj goster
+    % Display message
     if (isempty(ws_y))
-        % Output text'i ayarlayalim
+        % Adjust output text
         display(x_output_text);
-        set(handles.output_text, 'String', strcat(baglanti_invalid_msg,  x_output_text));
+        set(handles.output_text, 'String', strcat(connection_invalid_msg,  x_output_text));
     else
-        % Baglanti saglandi, Output Text'i ayarlayalim
+        % Adjust output text
         display(x_output_text);
-        set(handles.output_text, 'String', strcat(baglanti_valid_msg,  x_output_text));
+        set(handles.output_text, 'String', strcat(connection_valid_msg,  x_output_text));
         
         
         %>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         %>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        %>>>>> Konum/Zaman Subscriber
+        %>>>>> Pos/Time Subscriber
         %>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         %>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         
@@ -297,20 +271,20 @@ if(x_enable_sub == 1)
             end
             
             while (ctr > 0)
-                konum_cikti = konum_subscriber( x_server_input, x_port_input, x_sub_topic, x_sub_type, 'xx');
-                set(handles.output_text, 'String', strcat('Zaman:',num2str(konum_cikti(1)),'  Konum(x):', num2str(konum_cikti(2)), ' Konum(y):', num2str(konum_cikti(3)) ));
+                pos_out = MRI_pos_subscriber( x_server_input, x_port_input, x_sub_topic, x_sub_type, 'xx');
+                set(handles.output_text, 'String', strcat('Zaman:',num2str(pos_out(1)),'  Konum(x):', num2str(pos_out(2)), ' Konum(y):', num2str(pos_out(3)) ));
 
-                cizim_guncelle();
+                MRI_plot_update();
                 
-                %Sayaci dusur
+                % Decrement counter
                 ctr = ctr - 1;
             end
         end
         
-        % Output string'de PID parametresi denetimini yazalim.
+        % PID params check
         if (~isempty(x_enable_sub))
             if(isempty(x_server_input) && isempty(x_port_input) && isempty(x_sub_topic) && isempty(x_sub_type))
-                % Parametreleri Lutfen Dogru Giriniz
+                % Please enter the right parameters
                 parametre_invalid_msg = 'Please enter the right parameters';
                 set(handles.output_text, 'String', parametre_invalid_msg);
             end
@@ -320,20 +294,20 @@ if(x_enable_sub == 1)
 end
 
 if(x_enable_pid == 1)
-    [ws_y lh_y] = baglanti_kontrol(x_server_input, x_port_input);
-    %Baglanti mesajlari
-    baglanti_invalid_msg = 'Baglanti Basarisiz.';
-    baglanti_valid_msg = 'Connection Accomplished';
+    [ws_y lh_y] = MRI_connection_control(x_server_input, x_port_input);
+    % Connection messages
+    connection_invalid_msg = 'Connection failed';
+    connection_valid_msg = 'Connection Accomplished';
 
-    %Mesaj goster
+    % Display message
     if (isempty(ws_y))
-        % Output text'i ayarlayalim
+        % Adjust output text
         display(x_output_text);
-        set(handles.output_text, 'String', strcat(baglanti_invalid_msg,   x_output_text));
+        set(handles.output_text, 'String', strcat(connection_invalid_msg,   x_output_text));
     else
-        % Baglanti saglandi, Output Text'i ayarlayalim
+        % Adjust output text
         display(x_output_text);
-        set(handles.output_text, 'String', strcat(baglanti_valid_msg,  x_output_text));
+        set(handles.output_text, 'String', strcat(connection_valid_msg,  x_output_text));
     
         
         %>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -349,14 +323,14 @@ if(x_enable_pid == 1)
         display(x_pid_topic_input)
         
         if(~(isempty(x_server_input) && isempty(x_port_input) && isempty(x_pid_topic_input) && isempty(x_enable_pid)))
-            output_bilgisi = pid_publisher( x_server_input, x_port_input,  x_pid_topic_input, pid_sag_kp, pid_sag_ki, pid_sag_kd, pid_sol_kp, pid_sol_ki, pid_sol_kd)
-            set(handles.output_text, 'String', strcat(output_bilgisi,  x_output_text));
+            out_pid_data = MRI_pid_publisher( x_server_input, x_port_input,  x_pid_topic_input, pid_sag_kp, pid_sag_ki, pid_sag_kd, pid_sol_kp, pid_sol_ki, pid_sol_kd)
+            set(handles.output_text, 'String', strcat(out_pid_data,  x_output_text));
         end
         
-        % Output string'de PID parametresi denetimini yazalim.
+        % Params check
         if (~isempty(x_enable_pid))
             if(isempty(x_server_input) && isempty(x_port_input) && isempty(x_pid_topic_input))
-                % Parametreleri Lutfen Dogru Giriniz
+                % Please enter right params
                 parametre_invalid_msg = 'Please enter the right parameters';
                 set(handles.output_text, 'String', parametre_invalid_msg);
             end
@@ -398,26 +372,27 @@ function pushbutton5_Callback(hObject, eventdata, handles)
 global x_server_input;
 global x_port_input;
 global x_output_text;
-%Baglanti kontrolu
+
+% Connection control
 
 display(x_server_input)
 display(x_port_input)
 
-[ws_y lh_y] = baglanti_kontrol(x_server_input, x_port_input);
+[ws_y lh_y] = MRI_connection_control(x_server_input, x_port_input);
 	
-%Baglanti mesajlari
-baglanti_invalid_msg = 'Baglanti Basarisiz.';
-baglanti_valid_msg = 'Connection Accomplished';
+% Connection messages
+connection_invalid_msg = 'Connection Failed';
+connection_valid_msg = 'Connection Accomplished';
 
-%Mesaj goster
+% Display message
 if (isempty(ws_y))
-    % Output text'i ayarlayalim
+    % Adjust output text
     display(x_output_text);
-    set(handles.output_text, 'String', strcat(baglanti_invalid_msg, '\n', x_output_text));
+    set(handles.output_text, 'String', strcat(connection_invalid_msg, '\n', x_output_text));
 else
-    % Baglanti saglandi, Output Text'i ayarlayalim
+    % Adjust output text
     display(x_output_text);
-    set(handles.output_text, 'String', strcat(baglanti_valid_msg, '\n', x_output_text));
+    set(handles.output_text, 'String', strcat(connection_valid_msg, '\n', x_output_text));
 end
 
 end
