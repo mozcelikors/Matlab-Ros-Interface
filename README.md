@@ -3,7 +3,7 @@ Matlab-Ros-Interface
 
 Matlab-Ros-Interface is a MATLAB graphical interface that communicates with rosbridge server in order to communicate between MATLAB and ROS. web-matlab-bridge, Java-WebSocket and jsonlab libraries and softwares are used in order to achieve MATLAB-ROS connection with MATLAB GUI.
 
-IMPORTANT NOTE: This is rewritten version and is not yet tested. Please state any error in order for the project to be improved.
+IMPORTANT NOTE: This is rewritten version (translated from Turkish) and is not yet tested. Please state any error in order for the project to be improved.
 
 
 Disclaimer
