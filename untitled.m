@@ -272,7 +272,7 @@ if(x_enable_sub == 1)
             
             while (ctr > 0)
                 pos_out = MRI_pos_subscriber( x_server_input, x_port_input, x_sub_topic, x_sub_type, 'xx');
-                set(handles.output_text, 'String', strcat('Zaman:',num2str(pos_out(1)),'  Konum(x):', num2str(pos_out(2)), ' Konum(y):', num2str(pos_out(3)) ));
+                set(handles.output_text, 'String', strcat('Time:',num2str(pos_out(1)),'  Pos(x):', num2str(pos_out(2)), ' Pos(y):', num2str(pos_out(3)) ));
 
                 MRI_plot_update();
                 
