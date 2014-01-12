@@ -18,7 +18,7 @@ function out = MRI_pos_subscriber( server_y, port_y, topic_y, type_y, data_y)
     
     %lh = event.listener(sub,'OnMessageReceived',@(h,e) display(strcat('Received: ', int2str(e.data.data))));
     
-    lh1 = event.listener(sub, 'OnMessageReceived', @(h,e) knmzaman_data_yaz(e.data.data));
+    lh1 = event.listener(sub, 'OnMessageReceived', @(h,e) MRI_postime_write(e.data.data));
     lh = event.listener(sub,'OnMessageReceived',@(h,e)  ...
        disp(strcat('Received: ',...
        num2str(e.data.data(1)),...
@@ -27,7 +27,7 @@ function out = MRI_pos_subscriber( server_y, port_y, topic_y, type_y, data_y)
     
     pause(0.5)
     
-    position_time = knmzaman_data_oku;
+    position_time = MRI_postime_read;
 
     sub.unsubscribe
     delete(lh)
